@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword Puzzle Game</title>
+    <style>
+        table { 
+            border-collapse: collapse; 
+            margin: 20px;
+        }
+        td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            border: 1px solid #000;
+        }
+        input {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crossword Puzzle Game</h1>
+    <button onclick="loadPuzzle()">Generate New Puzzle</button>
+
+    <table id="crossword-grid"></table>
+
+    <br>
+
+    <button onclick="submitAnswers()">Submit Answers</button>
+
+    <script>
+        function loadPuzzle() {
+            fetch('/new_puzzle')
+                .then(response => response.json())
+                .then(grid => {
+                    const table = document.getElementById('crossword-grid');
+                    table.innerHTML = '';  // Clear existing grid
+                    grid.forEach((row, rowIndex) => {
+                        const tr = document.createElement('tr');
+                        row.forEach((cell, colIndex) => {
+                            const td = document.createElement('td');
+                            const input = document.createElement('input');
+                            input.setAttribute('data-row', rowIndex);
+                            input.setAttribute('data-col', colIndex);
+                            input.setAttribute('maxlength', '1');
+                            input.setAttribute('value', cell === '' ? '' : cell);
+                            td.appendChild(input);
+                            tr.appendChild(td);
+                        });
+                        table.appendChild(tr);
+                    });
+                });
+        }
+
+        function submitAnswers() {
+            const answers = [];
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                answers.push({
+                    row: input.getAttribute('data-row'),
+                    col: input.getAttribute('data-col'),
+                    value: input.value
+                });
+            });
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ answers })
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message));
+        }
+
+        // Load a new puzzle when the page loads
+        window.onload = loadPuzzle;
+    </script>
+</body>
+</html>
